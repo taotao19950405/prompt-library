@@ -10,4 +10,5 @@ List all available prompt shortcuts below. Do not execute any of them — just d
 | `/p3`       | Criticize the Solution |
 | `/p4`       | Solution Architect: Overall Risk Analysis |
 | `/p5`       | Write Functions Step by Step |
+| `/p6`       | 联想者 — Associative Thinker |
 | `/promptls` | List all prompts (this command) |
