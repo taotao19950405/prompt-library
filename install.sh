@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # prompt-library/install.sh
-# Add this prompt library to a project or globally.
+# Link this prompt library into a project or globally for Claude Code.
 #
 # Usage:
-#   ./install.sh              # link into current project (.claude/commands/)
-#   ./install.sh --global     # link into ~/.claude/commands/ (all projects)
-#   ./install.sh --remove     # remove links from current project
-#   ./install.sh --remove --global  # remove links from global
+#   ./install.sh              # link into current project (.claude/commands)
+#   ./install.sh --global     # link ~/.claude/commands to this library
+#   ./install.sh --remove     # remove link from current project
+#   ./install.sh --remove --global  # remove global link
 
 set -e
 
@@ -23,53 +23,29 @@ done
 
 if [[ "$MODE" == "global" ]]; then
   TARGET="$HOME/.claude/commands"
+  PARENT="$HOME/.claude"
 else
   TARGET="$(pwd)/.claude/commands"
+  PARENT="$(pwd)/.claude"
 fi
 
 if $REMOVE; then
-  if [[ ! -d "$TARGET" ]]; then
-    echo "Nothing to remove — $TARGET does not exist."
-    exit 0
+  if [[ -L "$TARGET" && "$(readlink "$TARGET")" == "$LIBRARY_DIR" ]]; then
+    rm "$TARGET"
+    echo "Removed link: $TARGET"
+  else
+    echo "No matching link found at $TARGET"
   fi
-  for f in "$LIBRARY_DIR"/*.md; do
-    name=$(basename "$f")
-    link="$TARGET/$name"
-    if [[ -L "$link" && "$(readlink "$link")" == "$f" ]]; then
-      rm "$link"
-      echo "removed $name"
-    fi
-  done
-  # Clean up empty dir (project mode only)
-  if [[ "$MODE" == "project" ]] && [[ -z "$(ls -A "$TARGET")" ]]; then
-    rmdir "$TARGET"
-    echo "removed $TARGET"
-  fi
-  echo "Done."
   exit 0
 fi
 
-mkdir -p "$TARGET"
-
-for f in "$LIBRARY_DIR"/*.md; do
-  name=$(basename "$f")
-  link="$TARGET/$name"
-  if [[ -e "$link" && ! -L "$link" ]]; then
-    echo "skipping $name (non-symlink file already exists at $link)"
-    continue
-  fi
-  ln -sf "$f" "$link"
-  echo "linked $name"
-done
-
-echo ""
-echo "Prompt library linked to: $TARGET"
-if [[ "$MODE" == "project" ]]; then
-  echo "Prompts are available as /p1, /p2, /p3, /p4, /p5 in this project."
-else
-  echo "Prompts are available as /p1, /p2, /p3, /p4, /p5 in all projects."
+if [[ -e "$TARGET" && ! -L "$TARGET" ]]; then
+  echo "Error: $TARGET exists and is not a symlink. Remove it manually first."
+  exit 1
 fi
+
+mkdir -p "$PARENT"
+ln -sf "$LIBRARY_DIR" "$TARGET"
+echo "Linked: $TARGET -> $LIBRARY_DIR"
 echo ""
-echo "Pipeline usage:"
-echo "  claude -p '/p1 <your ticket here>'"
-echo "  claude -p '/p4 <solution to analyze>'"
+echo "Prompts available in Claude Code: /p1  /p2  /p3  /p4  /p5  /promptls"
